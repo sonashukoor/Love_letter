@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Letter Creator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ff4d6d;
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease-in-out;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #ff4d6d;
+            box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.2);
+        }
+
+        textarea {
+            height: 200px;
+            resize: vertical;
+        }
+
+        .character-count {
+            text-align: right;
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            background: #ff4d6d;
+            color: #fff;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #e63950;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #b3b3b3;
+            cursor: not-allowed;
+        }
+
+        .preview-button {
+            background: #4d4dff;
+        }
+
+        .preview-button:hover {
+            background: #3939cc;
+        }
+
+        .template-suggestion {
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .template-suggestion:hover {
+            background: #eee;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        /* Floating Hearts Animation */
+        .heart {
+            position: fixed;
+            color: red;
+            font-size: 20px;
+            animation: float 5s ease-in infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>✨ Create Your Love Letter ✨</h2>
+        
+        <div class="form-group">
+            <label for="template">Need a wingman?</label>
+            <select id="template" onchange="updateTemplate()">
+                <option value="">-- Select a template --</option>
+                <option value="romantic">Romantic Love</option>
+                <option value="appreciation">Appreciation</option>
+                <option value="anniversary">Anniversary</option>
+                <option value="custom">Custom Message</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Your heart's destination</label>
+            <input 
+                type="email" 
+                id="email" 
+                placeholder="Enter your love's email"
+                oninput="validateForm()"
+                required
+            >
+        </div>
+        
+        <div class="form-group">
+            <label for="message">Get a lil cheesy</label>
+            <textarea 
+                id="message" 
+                placeholder="Express your love words here..."
+                oninput="updateCharacterCount(); validateForm()"
+                maxlength="1000"
+            ></textarea>
+            <div class="character-count">
+                <span id="current">0</span>/<span id="maximum">1000</span> characters
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button onclick="previewLetter()" class="preview-button">
+                Preview Letter
+            </button>
+            <button onclick="sendLoveLetter()" id="sendButton" disabled>
+                <span class="button-text">Send Love</span>
+                <div class="loading"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePreview()">&times;</span>
+            <h3>Preview Your Love Letter</h3>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.js"></script>
+    <script>
+        // Template messages
+        const templates = {
+            romantic: `Dear [Name],\n\nWords cannot express how much you mean to me. Every moment with you feels like magic, and my heart skips a beat whenever I think of you...\n\nWith all my love,\n[Your name]`,
+            appreciation: `My dearest [Name],\n\nI wanted to take a moment to tell you how much I appreciate having you in my life. Your kindness, strength, and beautiful spirit inspire me every day...\n\nThankfully yours,\n[Your name]`,
+            anniversary: `My love [Name],\n\nAs we celebrate another year together, I'm reminded of all the wonderful moments we've shared. Each day with you is a gift...\n\nHappy Anniversary!\n[Your name]`,
+            custom: ``
+        };
+
+        // Form validation
+        function validateForm() {
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            const sendButton = document.getElementById('sendButton');
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isValid = emailRegex.test(email) && message.trim().length > 0;
+            
+            sendButton.disabled = !isValid;
+        }
+
+        // Character count
+        function updateCharacterCount() {
+            const message = document.getElementById('message');
+            const current = document.getElementById('current');
+            current.textContent = message.value.length;
+        }
+
+        // Template selection
+        function updateTemplate() {
+            const template = document.getElementById('template').value;
+            if (template && templates[template]) {
+                document.getElementById('message').value = templates[template];
+                updateCharacterCount();
+                validateForm();
+            }
+        }
+
+        // Preview functionality
+        function previewLetter() {
+            const message = document.getElementById('message').value;
+            const modal = document.getElementById('previewModal');
+            const previewContent = document.getElementById('previewContent');
+            
+            previewContent.innerHTML = message.replace(/\n/g, '<br>');
+            modal.style.display = 'flex';
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        // Heart animation
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            document.body.appendChild(heart);
+
+            setTimeout(() => heart.remove(), 5000);
+        }
+
+        setInterval(createHeart, 300);
+
+        // Send love letter
+        async function sendLoveLetter() {
+            const button = document.getElementById('sendButton');
+            const buttonText = button.querySelector('.button-text');
+            const loading = button.querySelector('.loading');
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            // Disable button and show loading
+            button.disabled = true;
+            buttonText.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, message })
+                });
+
+                const data = await response.json();
+                
+                Toastify({
+                    text: data.message || 'Love letter sent successfully! ❤️',
+                    duration: 3000,
+                    gravity: 'top',
+                    position: 'center',
+                    backgroundColor: '#ff4d6d'
+                }).showToast();
+
+                // Clear form
+                document.getElementById('email').value = '';
+                document.getElementById('message').value = '';
+                document.getElementById('template').value = '';
+                updateCharacterCount();
+
+            } catch (error) {
+                Toastify({
+                    text: 'Failed to send love letter. Please try again! 💌',
+                    duration: 3000,
+                    gravity: 'top',
+                    position: 'center',
+                    backgroundColor: '#e63950'
+                }).showToast();
+            } finally {
+                // Reset button state
+                buttonText.style.display = 'block';
+                loading.style.display = 'none';
+                validateForm();
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('previewModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
